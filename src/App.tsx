@@ -24,7 +24,13 @@ import { GoogleFormsConfigModal } from './components/GoogleFormsConfigModal';
 import { MobileBottomBar } from './components/MobileBottomBar';
 import { MobileMonthSheet } from './components/MobileMonthSheet';
 import { MobileMoreModal } from './components/MobileMoreModal';
-import { Sparkles, Cake, UserPlus, Users } from 'lucide-react';
+import { Sparkles, Cake, UserPlus, Users, Cloud, Check } from 'lucide-react';
+import {
+  subscribeToBirthdays,
+  saveBirthdayToFirestore,
+  deleteBirthdayFromFirestore,
+  resetBirthdaysInFirestore,
+} from './firebase';
 
 export default function App() {
   const [people, setPeople] = useState<BirthdayPerson[]>([]);
@@ -46,10 +52,25 @@ export default function App() {
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
-  // Initialize
+  // Initialize: load local cache for instant paint, then subscribe to Firestore real-time updates
   useEffect(() => {
     const loaded = loadBirthdays();
     setPeople(loaded);
+
+    // Real-time synchronization across all devices
+    const unsubscribe = subscribeToBirthdays(
+      (cloudPeople) => {
+        if (cloudPeople && cloudPeople.length > 0) {
+          setPeople(cloudPeople);
+          saveBirthdays(cloudPeople);
+        }
+      },
+      (error) => {
+        console.warn('Real-time sync notice, using local cache:', error);
+      }
+    );
+
+    return () => unsubscribe();
   }, []);
 
   const updatePeople = (newPeople: BirthdayPerson[]) => {
@@ -57,8 +78,8 @@ export default function App() {
     saveBirthdays(newPeople);
   };
 
-  // Add or Edit person
-  const handleSavePerson = (person: BirthdayPerson) => {
+  // Add or Edit person with real-time cloud sync
+  const handleSavePerson = async (person: BirthdayPerson) => {
     const exists = people.some((p) => p.id === person.id);
     let updated: BirthdayPerson[];
     if (exists) {
@@ -67,26 +88,45 @@ export default function App() {
       updated = [...people, person];
     }
     updatePeople(updated);
+
+    try {
+      await saveBirthdayToFirestore(person);
+    } catch (err) {
+      console.error('Error saving to Firestore:', err);
+    }
   };
 
-  // Register from Forms
-  const handlePersonRegistered = (newPerson: BirthdayPerson) => {
+  // Register from Forms with real-time cloud sync
+  const handlePersonRegistered = async (newPerson: BirthdayPerson) => {
     const updated = [...people, newPerson];
     updatePeople(updated);
+
+    try {
+      await saveBirthdayToFirestore(newPerson);
+    } catch (err) {
+      console.error('Error syncing new registration to Firestore:', err);
+    }
   };
 
-  // Delete person
+  // Delete person with password protection and cloud sync
   const handleDeletePerson = (person: BirthdayPerson) => {
     setDeletingPerson(person);
     setIsDeleteOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deletingPerson) {
-      const updated = people.filter((p) => p.id !== deletingPerson.id);
+      const idToDelete = deletingPerson.id;
+      const updated = people.filter((p) => p.id !== idToDelete);
       updatePeople(updated);
       setIsDeleteOpen(false);
       setDeletingPerson(null);
+
+      try {
+        await deleteBirthdayFromFirestore(idToDelete);
+      } catch (err) {
+        console.error('Error deleting from Firestore:', err);
+      }
     }
   };
 
@@ -96,16 +136,22 @@ export default function App() {
     setIsAddEditOpen(true);
   };
 
-  // Reset to default list (protected with admin password modal)
+  // Reset to default list (protected with admin password modal & synced to Firestore)
   const handleResetDefaults = () => {
     setIsResetConfirmOpen(true);
   };
 
-  const confirmResetDefaults = () => {
+  const confirmResetDefaults = async () => {
     const def = resetBirthdaysToDefault();
     setPeople(def);
     setIsResetConfirmOpen(false);
     triggerBigCelebration();
+
+    try {
+      await resetBirthdaysInFirestore();
+    } catch (err) {
+      console.error('Error resetting in Firestore:', err);
+    }
   };
 
   // Focus search input smoothly

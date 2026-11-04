@@ -1,0 +1,47 @@
+{
+  "entities": {
+    "Birthday": {
+      "title": "Birthday",
+      "description": "Registro de cumpleaños de un integrante del grupo Desjuiciados",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Identificador único" },
+        "name": { "type": "string", "description": "Nombre de la persona", "minLength": 1, "maxLength": 100 },
+        "month": { "type": "number", "description": "Mes del cumpleaños (1 a 12)" },
+        "day": { "type": "number", "description": "Día del mes (1 a 31)" },
+        "phone": { "type": "string", "description": "Número de WhatsApp o celular", "minLength": 7, "maxLength": 30 },
+        "alias": { "type": "string", "description": "Alias, apodo o usuario", "maxLength": 100 },
+        "customNote": { "type": "string", "description": "Nota personalizada o cómo le gusta celebrar", "maxLength": 300 },
+        "isRegisteredViaForm": { "type": "boolean", "description": "Si fue registrado vía formulario abierto" },
+        "createdAt": { "type": "string", "description": "Fecha y hora de creación" }
+      },
+      "required": ["name", "month", "day"]
+    },
+    "FormSubmission": {
+      "title": "FormSubmission",
+      "description": "Historial de registros de cumpleaños enviados desde el formulario",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID del registro" },
+        "name": { "type": "string", "description": "Nombre" },
+        "month": { "type": "number", "description": "Mes" },
+        "day": { "type": "number", "description": "Día" },
+        "phone": { "type": "string", "description": "WhatsApp o celular" },
+        "alias": { "type": "string", "description": "Alias" },
+        "notes": { "type": "string", "description": "Notas" },
+        "timestamp": { "type": "string", "description": "Timestamp ISO" }
+      },
+      "required": ["name", "month", "day", "phone", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/birthdays/{birthdayId}": {
+      "schema": "Birthday",
+      "description": "Colección global y sincronizada de cumpleaños del grupo Desjuiciados"
+    },
+    "/form_submissions/{submissionId}": {
+      "schema": "FormSubmission",
+      "description": "Auditoría de registros enviados por los usuarios"
+    }
+  }
+}

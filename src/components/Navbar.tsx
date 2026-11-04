@@ -37,9 +37,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-[#EFE9DE] text-[#695643] border border-[#DFD6C7] shrink-0">
                   {totalCount} 🎂
                 </span>
+                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9] shrink-0" title="Sincronizado en tiempo real en la nube para todos los dispositivos">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse" />
+                  <span>En vivo</span>
+                </span>
               </div>
               <p className="text-[11px] text-[#7A6E63] hidden sm:block">
-                Calendario oficial de celebraciones del parche ✨
+                Calendario oficial de celebraciones del parche • Sincronizado en la nube ✨
               </p>
             </div>
           </div>

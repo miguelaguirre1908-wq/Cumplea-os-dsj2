@@ -3,6 +3,7 @@ import { MONTHS_DATA } from '../data/initialBirthdays';
 import { BirthdayPerson, GoogleFormsSettings } from '../types';
 import { triggerBigCelebration } from '../utils/dateUtils';
 import { recordFormSubmission } from '../utils/storage';
+import { saveSubmissionToFirestore } from '../firebase';
 import { X, UserPlus, CheckCircle2, FileSpreadsheet, Send, Phone } from 'lucide-react';
 
 interface RegisterFormsModalProps {
@@ -76,7 +77,7 @@ export const RegisterFormsModal: React.FC<RegisterFormsModalProps> = ({
     };
 
     // Record in local forms log
-    recordFormSubmission({
+    const subRecord = {
       name: newPerson.name,
       month: newPerson.month,
       day: newPerson.day,
@@ -84,6 +85,14 @@ export const RegisterFormsModal: React.FC<RegisterFormsModalProps> = ({
       alias: newPerson.alias,
       notes: newPerson.customNote,
       syncedToGoogleForms: Boolean(formsConfig.formUrl && formsConfig.formUrl.includes('google.com/forms')),
+    };
+    recordFormSubmission(subRecord);
+
+    // Sync submission to Firestore
+    saveSubmissionToFirestore({
+      ...subRecord,
+      id: `sub-${Date.now()}`,
+      timestamp: new Date().toISOString(),
     });
 
     onPersonRegistered(newPerson);

@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidId(docId) {
+      return docId is string && docId.size() > 0 && docId.size() <= 100;
+    }
+
+    function isValidBirthday(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 120 &&
+             data.month is int && data.month >= 1 && data.month <= 12 &&
+             data.day is int && data.day >= 1 && data.day <= 31 &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 50)) &&
+             (!('alias' in data) || (data.alias is string && data.alias.size() <= 120)) &&
+             (!('customNote' in data) || (data.customNote is string && data.customNote.size() <= 500)) &&
+             (!('isRegisteredViaForm' in data) || data.isRegisteredViaForm is bool) &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 100)) &&
+             (!('id' in data) || (data.id is string && data.id.size() <= 100));
+    }
+
+    function isValidSubmission(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 120 &&
+             data.month is int && data.month >= 1 && data.month <= 12 &&
+             data.day is int && data.day >= 1 && data.day <= 31 &&
+             data.phone is string && data.phone.size() >= 5 && data.phone.size() <= 50;
+    }
+
+    match /birthdays/{birthdayId} {
+      allow read: if true;
+      allow create: if isValidId(birthdayId) && isValidBirthday(request.resource.data);
+      allow update: if isValidId(birthdayId) && isValidBirthday(request.resource.data);
+      allow delete: if isValidId(birthdayId);
+    }
+
+    match /form_submissions/{submissionId} {
+      allow read: if true;
+      allow create: if isValidId(submissionId) && isValidSubmission(request.resource.data);
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}
