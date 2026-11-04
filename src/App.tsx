@@ -60,10 +60,8 @@ export default function App() {
     // Real-time synchronization across all devices
     const unsubscribe = subscribeToBirthdays(
       (cloudPeople) => {
-        if (cloudPeople && cloudPeople.length > 0) {
-          setPeople(cloudPeople);
-          saveBirthdays(cloudPeople);
-        }
+        setPeople(cloudPeople);
+        saveBirthdays(cloudPeople);
       },
       (error) => {
         console.warn('Real-time sync notice, using local cache:', error);

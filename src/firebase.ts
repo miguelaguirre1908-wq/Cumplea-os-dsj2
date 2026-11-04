@@ -47,7 +47,7 @@ const SUBMISSIONS_COLLECTION = 'form_submissions';
 
 /**
  * Real-time listener for birthdays across all devices.
- * Automatically seeds the 44 initial members if collection is empty.
+ * Directly propagates cloud additions, edits, and deletions.
  */
 export function subscribeToBirthdays(
   onUpdate: (birthdays: BirthdayPerson[]) => void,
@@ -56,22 +56,9 @@ export function subscribeToBirthdays(
   const birthdaysRef = collection(db, BIRTHDAYS_COLLECTION);
   const q = query(birthdaysRef);
 
-  let initialSeedingStarted = false;
-
   const unsubscribe = onSnapshot(
     q,
-    async (snapshot) => {
-      // If collection is completely empty, seed it with INITIAL_BIRTHDAYS
-      if (snapshot.empty && !initialSeedingStarted) {
-        initialSeedingStarted = true;
-        try {
-          await seedInitialBirthdays();
-          return;
-        } catch (e) {
-          console.error('Error auto-seeding birthdays:', e);
-        }
-      }
-
+    (snapshot) => {
       const list: BirthdayPerson[] = [];
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
@@ -88,6 +75,7 @@ export function subscribeToBirthdays(
         });
       });
 
+      // Update state whenever Firestore emits
       onUpdate(list);
     },
     (err) => {
@@ -100,23 +88,24 @@ export function subscribeToBirthdays(
 }
 
 /**
- * Seed initial 44 members into Firestore
+ * Seed initial 46 members into Firestore cleanly
  */
 export async function seedInitialBirthdays(): Promise<void> {
   const batch = writeBatch(db);
   INITIAL_BIRTHDAYS.forEach((person) => {
     const docRef = doc(db, BIRTHDAYS_COLLECTION, person.id);
-    batch.set(docRef, {
+    const data: Record<string, any> = {
       id: person.id,
       name: person.name,
       month: person.month,
       day: person.day,
-      alias: person.alias || null,
-      phone: person.phone || null,
-      customNote: person.customNote || null,
       isRegisteredViaForm: false,
       createdAt: new Date().toISOString(),
-    });
+    };
+    if (person.phone) data.phone = person.phone;
+    if (person.alias) data.alias = person.alias;
+    if (person.customNote) data.customNote = person.customNote;
+    batch.set(docRef, data);
   });
   await batch.commit();
 }
@@ -126,17 +115,19 @@ export async function seedInitialBirthdays(): Promise<void> {
  */
 export async function saveBirthdayToFirestore(person: BirthdayPerson): Promise<void> {
   const docRef = doc(db, BIRTHDAYS_COLLECTION, person.id);
-  await setDoc(docRef, {
+  const cleanData: Record<string, any> = {
     id: person.id,
-    name: person.name,
-    month: person.month,
-    day: person.day,
-    phone: person.phone || null,
-    alias: person.alias || null,
-    customNote: person.customNote || null,
+    name: person.name.trim(),
+    month: Number(person.month),
+    day: Number(person.day),
     isRegisteredViaForm: Boolean(person.isRegisteredViaForm),
     createdAt: person.createdAt || new Date().toISOString(),
-  }, { merge: true });
+  };
+  if (person.phone) cleanData.phone = person.phone.trim();
+  if (person.alias) cleanData.alias = person.alias.trim();
+  if (person.customNote) cleanData.customNote = person.customNote.trim();
+
+  await setDoc(docRef, cleanData);
 }
 
 /**
@@ -148,7 +139,7 @@ export async function deleteBirthdayFromFirestore(personId: string): Promise<voi
 }
 
 /**
- * Reset Firestore collection back to the 44 default members
+ * Reset Firestore collection back to the default members
  */
 export async function resetBirthdaysInFirestore(): Promise<void> {
   const birthdaysRef = collection(db, BIRTHDAYS_COLLECTION);
