@@ -1,0 +1,8 @@
+{
+  "name": "Cumpleaños Desjuiciados",
+  "description": "Tablero interactivo y moderno en tonos beige y blancos para visualizar y gestionar los cumpleaños del grupo Desjuiciados por mes, con registro en Google Forms y gestión manual.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
