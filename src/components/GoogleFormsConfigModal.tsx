@@ -39,9 +39,10 @@ export const GoogleFormsConfigModal: React.FC<GoogleFormsConfigModalProps> = ({
 
   const handleExportCSV = () => {
     if (submissions.length === 0) return;
-    const headers = ['Nombre', 'Mes', 'Dia', 'Alias', 'Notas', 'FechaRegistro'];
+    const headers = ['Nombre', 'WhatsApp_Celular', 'Mes', 'Dia', 'Alias', 'Notas', 'FechaRegistro'];
     const rows = submissions.map((s) => [
       `"${s.name.replace(/"/g, '""')}"`,
+      `"${(s.phone || '').replace(/"/g, '""')}"`,
       s.month,
       s.day,
       `"${(s.alias || '').replace(/"/g, '""')}"`,
@@ -186,6 +187,7 @@ export const GoogleFormsConfigModal: React.FC<GoogleFormsConfigModalProps> = ({
                       </p>
                       <p className="text-[11px] text-[#867768]">
                         {sub.day} de {MONTHS_DATA.find((m) => m.month === sub.month)?.name} • {new Date(sub.timestamp).toLocaleDateString()}
+                        {sub.phone && <span className="ml-1 text-[#2E7D32] font-semibold">• 📱 {sub.phone}</span>}
                       </p>
                     </div>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#EAE2D5] text-[#554536]">

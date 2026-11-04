@@ -18,6 +18,7 @@ import { BirthdayCard } from './components/BirthdayCard';
 import { RegisterFormsModal } from './components/RegisterFormsModal';
 import { AddEditModal } from './components/AddEditModal';
 import { DeleteConfirmModal } from './components/DeleteConfirmModal';
+import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { ShareWhatsAppModal } from './components/ShareWhatsAppModal';
 import { GoogleFormsConfigModal } from './components/GoogleFormsConfigModal';
 import { MobileBottomBar } from './components/MobileBottomBar';
@@ -43,6 +44,7 @@ export default function App() {
   const [isFormsConfigOpen, setIsFormsConfigOpen] = useState(false);
   const [isMobileMonthSheetOpen, setIsMobileMonthSheetOpen] = useState(false);
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   // Initialize
   useEffect(() => {
@@ -94,17 +96,16 @@ export default function App() {
     setIsAddEditOpen(true);
   };
 
-  // Reset to default list
+  // Reset to default list (protected with admin password modal)
   const handleResetDefaults = () => {
-    if (
-      window.confirm(
-        '¿Deseas restablecer la lista a los 44 integrantes originales del grupo Desjuiciados?'
-      )
-    ) {
-      const def = resetBirthdaysToDefault();
-      setPeople(def);
-      triggerBigCelebration();
-    }
+    setIsResetConfirmOpen(true);
+  };
+
+  const confirmResetDefaults = () => {
+    const def = resetBirthdaysToDefault();
+    setPeople(def);
+    setIsResetConfirmOpen(false);
+    triggerBigCelebration();
   };
 
   // Focus search input smoothly
@@ -473,6 +474,13 @@ export default function App() {
         }}
         onConfirm={confirmDelete}
         person={deletingPerson}
+      />
+
+      <ResetConfirmModal
+        isOpen={isResetConfirmOpen}
+        onClose={() => setIsResetConfirmOpen(false)}
+        onConfirm={confirmResetDefaults}
+        currentCount={people.length}
       />
 
       <ShareWhatsAppModal

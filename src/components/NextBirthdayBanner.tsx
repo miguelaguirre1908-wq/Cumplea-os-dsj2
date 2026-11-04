@@ -1,7 +1,13 @@
 import React from 'react';
 import { BirthdayPerson } from '../types';
-import { getNextBirthdays, getZodiacSign, triggerWarmConfetti, triggerBigCelebration } from '../utils/dateUtils';
-import { Sparkles, MessageCircle, PartyPopper, CalendarClock, ChevronRight } from 'lucide-react';
+import {
+  getNextBirthdays,
+  getZodiacSign,
+  triggerWarmConfetti,
+  triggerBigCelebration,
+  getWhatsAppDirectUrl,
+} from '../utils/dateUtils';
+import { Sparkles, MessageCircle, PartyPopper, CalendarClock, ChevronRight, Phone } from 'lucide-react';
 import { MONTHS_DATA } from '../data/initialBirthdays';
 
 interface NextBirthdayBannerProps {
@@ -22,10 +28,8 @@ export const NextBirthdayBanner: React.FC<NextBirthdayBannerProps> = ({
   const monthInfo = MONTHS_DATA.find((m) => m.month === nextPerson.person.month);
 
   const getCelebrationMessage = (person: BirthdayPerson) => {
-    const text = encodeURIComponent(
-      `¡Feliz Cumpleaños ${person.name} (${person.alias || ''})! 🎉🎂 Que la pases genial y que cumplas muchos más con toda la familia de Desjuiciados! 🥂✨`
-    );
-    return `https://wa.me/?text=${text}`;
+    const text = `¡Feliz Cumpleaños ${person.name} (${person.alias || ''})! 🎉🎂 Que la pases genial y que cumplas muchos más con toda la familia de Desjuiciados! 🥂✨`;
+    return getWhatsAppDirectUrl(person.phone, text);
   };
 
   return (
@@ -57,6 +61,12 @@ export const NextBirthdayBanner: React.FC<NextBirthdayBannerProps> = ({
               {nextPerson.person.alias && (
                 <span className="text-sm sm:text-xl font-normal text-[#8A7867]">
                   {nextPerson.person.alias}
+                </span>
+              )}
+              {nextPerson.person.phone && (
+                <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-[#E8F5E9] text-[#2E7D32] font-semibold border border-[#C8E6C9]">
+                  <Phone className="w-3 h-3 text-[#16A34A]" />
+                  <span>{nextPerson.person.phone}</span>
                 </span>
               )}
             </h2>

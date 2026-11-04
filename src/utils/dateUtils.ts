@@ -140,6 +140,34 @@ export function formatWhatsAppMessage(people: BirthdayPerson[]): string {
   return msg;
 }
 
+export function getWhatsAppDirectUrl(phone?: string, text?: string): string {
+  const encodedText = text ? encodeURIComponent(text) : '';
+  if (!phone || !phone.trim()) {
+    return encodedText ? `https://wa.me/?text=${encodedText}` : 'https://wa.me/';
+  }
+
+  // Clean non-digits
+  let clean = phone.replace(/[^0-9]/g, '');
+
+  // If starts with 00, replace with nothing
+  if (clean.startsWith('00')) {
+    clean = clean.substring(2);
+  }
+
+  // If 10 digits starting with 3 (Colombian mobile), prepend Colombian country code 57
+  if (clean.length === 10 && clean.startsWith('3')) {
+    clean = '57' + clean;
+  }
+
+  if (!clean) {
+    return encodedText ? `https://wa.me/?text=${encodedText}` : 'https://wa.me/';
+  }
+
+  return encodedText
+    ? `https://wa.me/${clean}?text=${encodedText}`
+    : `https://wa.me/${clean}`;
+}
+
 export function exportToICS(people: BirthdayPerson[]): void {
   const currentYear = new Date().getFullYear();
   let icsContent = [

@@ -3,6 +3,7 @@ export interface BirthdayPerson {
   name: string;
   month: number; // 1 to 12
   day: number;   // 1 to 31
+  phone?: string; // WhatsApp o celular
   alias?: string;
   customNote?: string;
   avatarSeed?: string;
@@ -35,6 +36,7 @@ export interface FormSubmissionRecord {
   name: string;
   month: number;
   day: number;
+  phone: string;
   alias?: string;
   notes?: string;
   timestamp: string;

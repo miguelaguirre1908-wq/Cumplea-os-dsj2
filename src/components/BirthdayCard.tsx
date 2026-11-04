@@ -1,7 +1,22 @@
 import React, { useState } from 'react';
 import { BirthdayPerson } from '../types';
-import { getDaysUntilBirthday, getZodiacSign, triggerWarmConfetti, triggerBigCelebration } from '../utils/dateUtils';
-import { MessageCircle, MoreVertical, Edit2, Trash2, PartyPopper, Check, Sparkles } from 'lucide-react';
+import {
+  getDaysUntilBirthday,
+  getZodiacSign,
+  triggerWarmConfetti,
+  triggerBigCelebration,
+  getWhatsAppDirectUrl,
+} from '../utils/dateUtils';
+import {
+  MessageCircle,
+  MoreVertical,
+  Edit2,
+  Trash2,
+  PartyPopper,
+  Check,
+  Sparkles,
+  Phone,
+} from 'lucide-react';
 import { MONTHS_DATA } from '../data/initialBirthdays';
 
 interface BirthdayCardProps {
@@ -26,10 +41,9 @@ export const BirthdayCard: React.FC<BirthdayCardProps> = ({
 
   const handleWhatsApp = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const message = encodeURIComponent(
-      `¡Hola ${person.name}! 🎉🎂 Te deseo un muy Feliz Cumpleaños de parte de todo el grupo Desjuiciados! ¡A celebrar en grande! 🥂✨`
-    );
-    window.open(`https://wa.me/?text=${message}`, '_blank');
+    const message = `¡Hola ${person.name}! 🎉🎂 Te deseo un muy Feliz Cumpleaños de parte de todo el grupo Desjuiciados! ¡A celebrar en grande! 🥂✨`;
+    const targetUrl = getWhatsAppDirectUrl(person.phone, message);
+    window.open(targetUrl, '_blank');
   };
 
   const handleCelebrate = (e: React.MouseEvent) => {
@@ -43,7 +57,8 @@ export const BirthdayCard: React.FC<BirthdayCardProps> = ({
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const text = `${person.name} (${person.alias || ''}) - ${person.day} de ${monthData?.name}`;
+    const phoneInfo = person.phone ? ` • Tel: ${person.phone}` : '';
+    const text = `${person.name} (${person.alias || ''}) - ${person.day} de ${monthData?.name}${phoneInfo}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -87,6 +102,12 @@ export const BirthdayCard: React.FC<BirthdayCardProps> = ({
                   {person.alias}
                 </span>
               )}
+              {person.phone && (
+                <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md bg-[#E8F5E9] text-[#2E7D32] font-medium border border-[#C8E6C9]">
+                  <Phone className="w-2.5 h-2.5 text-[#16A34A]" />
+                  <span>{person.phone}</span>
+                </span>
+              )}
               {person.isRegisteredViaForm && (
                 <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-[#EAE2D5] text-[#554637] font-medium">
                   Form
@@ -94,7 +115,7 @@ export const BirthdayCard: React.FC<BirthdayCardProps> = ({
               )}
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs text-[#857667] mt-0.5">
+            <div className="flex items-center gap-1.5 text-xs text-[#857667] mt-0.5 flex-wrap">
               <span>
                 {zodiac.symbol} {zodiac.sign}
               </span>
@@ -122,7 +143,7 @@ export const BirthdayCard: React.FC<BirthdayCardProps> = ({
         <div className="flex items-center gap-1 shrink-0 ml-2">
           <button
             onClick={handleWhatsApp}
-            title="Felicitar en WhatsApp"
+            title={person.phone ? `Felicitar a ${person.name} (${person.phone})` : "Felicitar en WhatsApp"}
             className="p-2 sm:p-2.5 rounded-xl text-[#2E7D32] hover:bg-[#E2F0D9] active:scale-95 transition-all cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
           >
             <MessageCircle className="w-4 h-4" />
@@ -143,7 +164,7 @@ export const BirthdayCard: React.FC<BirthdayCardProps> = ({
           </button>
           <button
             onClick={() => onDelete(person)}
-            title="Eliminar"
+            title="Eliminar (requiere clave de administrador)"
             className="p-2 rounded-xl text-[#A67878] hover:text-[#991B1B] hover:bg-[#FEE2E2] transition-all cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -219,7 +240,7 @@ export const BirthdayCard: React.FC<BirthdayCardProps> = ({
                     className="fixed inset-0 z-20"
                     onClick={() => setShowMenu(false)}
                   />
-                  <div className="absolute right-0 top-10 z-30 w-44 rounded-2xl bg-[#FAF8F5] border border-[#E2D6C5] shadow-lg py-1.5 text-xs text-[#4F4133]">
+                  <div className="absolute right-0 top-10 z-30 w-48 rounded-2xl bg-[#FAF8F5] border border-[#E2D6C5] shadow-lg py-1.5 text-xs text-[#4F4133]">
                     <button
                       onClick={(e) => {
                         setShowMenu(false);
@@ -252,7 +273,7 @@ export const BirthdayCard: React.FC<BirthdayCardProps> = ({
                       className="w-full text-left px-3.5 py-2.5 hover:bg-[#FEE2E2] text-[#991B1B] flex items-center gap-2 cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5 text-[#DC2626]" />
-                      <span>Eliminar</span>
+                      <span>Eliminar (con clave)</span>
                     </button>
                   </div>
                 </>
@@ -269,6 +290,12 @@ export const BirthdayCard: React.FC<BirthdayCardProps> = ({
           {person.alias && (
             <p className="text-xs text-[#7A6B5C] font-medium mt-0.5">
               {person.alias}
+            </p>
+          )}
+          {person.phone && (
+            <p className="text-xs text-[#2E7D32] font-semibold mt-1 flex items-center gap-1.5">
+              <Phone className="w-3 h-3 text-[#16A34A]" />
+              <span>{person.phone}</span>
             </p>
           )}
           {person.customNote && (
@@ -297,6 +324,7 @@ export const BirthdayCard: React.FC<BirthdayCardProps> = ({
       <div className="pt-3.5 mt-3.5 border-t border-[#EAE1D3] flex items-center justify-between gap-2">
         <button
           onClick={handleWhatsApp}
+          title={person.phone ? `Felicitar a ${person.name} (${person.phone})` : "Felicitar en WhatsApp"}
           className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#14532D] border border-[#25D366]/25 text-xs font-semibold transition-all active:scale-95 cursor-pointer min-h-[42px]"
         >
           <MessageCircle className="w-4 h-4 text-[#16A34A]" />

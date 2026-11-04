@@ -3,7 +3,7 @@ import { MONTHS_DATA } from '../data/initialBirthdays';
 import { BirthdayPerson, GoogleFormsSettings } from '../types';
 import { triggerBigCelebration } from '../utils/dateUtils';
 import { recordFormSubmission } from '../utils/storage';
-import { X, UserPlus, CheckCircle2, FileSpreadsheet, Send } from 'lucide-react';
+import { X, UserPlus, CheckCircle2, FileSpreadsheet, Send, Phone } from 'lucide-react';
 
 interface RegisterFormsModalProps {
   isOpen: boolean;
@@ -19,17 +19,43 @@ export const RegisterFormsModal: React.FC<RegisterFormsModalProps> = ({
   formsConfig,
 }) => {
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [month, setMonth] = useState<number>(new Date().getMonth() + 1);
   const [day, setDay] = useState<number>(new Date().getDate());
   const [alias, setAlias] = useState('');
   const [customNote, setCustomNote] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [nameError, setNameError] = useState('');
   const [successData, setSuccessData] = useState<BirthdayPerson | null>(null);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+
+    let hasError = false;
+    if (!name.trim()) {
+      setNameError('Por favor ingresa tu nombre.');
+      hasError = true;
+    } else {
+      setNameError('');
+    }
+
+    const cleanPhone = phone.trim();
+    if (!cleanPhone) {
+      setPhoneError('El campo [WhatsApp o celular] es obligatorio.');
+      hasError = true;
+    } else {
+      const digitsOnly = cleanPhone.replace(/[^0-9]/g, '');
+      if (digitsOnly.length < 7) {
+        setPhoneError('Por favor ingresa un número de teléfono o celular válido.');
+        hasError = true;
+      } else {
+        setPhoneError('');
+      }
+    }
+
+    if (hasError) return;
 
     const formattedAlias = alias.trim()
       ? alias.startsWith('@')
@@ -42,6 +68,7 @@ export const RegisterFormsModal: React.FC<RegisterFormsModalProps> = ({
       name: name.trim(),
       month: Number(month),
       day: Number(day),
+      phone: cleanPhone,
       alias: formattedAlias,
       customNote: customNote.trim() || undefined,
       isRegisteredViaForm: true,
@@ -53,6 +80,7 @@ export const RegisterFormsModal: React.FC<RegisterFormsModalProps> = ({
       name: newPerson.name,
       month: newPerson.month,
       day: newPerson.day,
+      phone: cleanPhone,
       alias: newPerson.alias,
       notes: newPerson.customNote,
       syncedToGoogleForms: Boolean(formsConfig.formUrl && formsConfig.formUrl.includes('google.com/forms')),
@@ -65,8 +93,11 @@ export const RegisterFormsModal: React.FC<RegisterFormsModalProps> = ({
 
   const handleResetAndClose = () => {
     setName('');
+    setPhone('');
     setAlias('');
     setCustomNote('');
+    setNameError('');
+    setPhoneError('');
     setSuccessData(null);
     onClose();
   };
@@ -93,7 +124,7 @@ export const RegisterFormsModal: React.FC<RegisterFormsModalProps> = ({
                 ¿No estás en la lista?
               </h3>
               <p className="text-xs text-[#786A5D]">
-                Regístrate para que no se nos pase tu fecha 🎂
+                Regístrate para que celebremos tu cumpleaños juntos 🎂
               </p>
             </div>
           </div>
@@ -117,7 +148,7 @@ export const RegisterFormsModal: React.FC<RegisterFormsModalProps> = ({
                   ¡Bienvenido a la lista de Desjuiciados! 🎉
                 </h4>
                 <p className="text-xs sm:text-sm text-[#665749] mt-1">
-                  Tu cumpleaños <strong>{successData.day} de {MONTHS_DATA.find((m) => m.month === successData.month)?.name}</strong> ya fue registrado y guardado en la base de datos de Forms.
+                  Tu cumpleaños <strong>{successData.day} de {MONTHS_DATA.find((m) => m.month === successData.month)?.name}</strong> ya fue registrado exitosamente.
                 </p>
               </div>
 
@@ -125,6 +156,11 @@ export const RegisterFormsModal: React.FC<RegisterFormsModalProps> = ({
                 <p>
                   <strong>Nombre:</strong> {successData.name}
                 </p>
+                {successData.phone && (
+                  <p>
+                    <strong>WhatsApp / Celular:</strong> {successData.phone}
+                  </p>
+                )}
                 {successData.alias && (
                   <p>
                     <strong>Usuario/Alias:</strong> {successData.alias}
@@ -155,24 +191,64 @@ export const RegisterFormsModal: React.FC<RegisterFormsModalProps> = ({
               <div className="p-3 sm:p-3.5 rounded-2xl bg-[#F3ECE0] border border-[#E3D7C5] flex items-start gap-2.5 text-xs text-[#635343]">
                 <FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5 text-[#866C52] shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold text-[#3B2F23]">Registro en Forms:</span>{' '}
-                  Tus datos se guardan al instante en este tablero interactivo y se registran en el formulario oficial del grupo.
+                  <span className="font-bold text-[#3B2F23]">Registro abierto a todos:</span>{' '}
+                  Cualquier integrante puede inscribirse. Tu WhatsApp nos permite enviarte felicitaciones directas en tu fecha.
                 </div>
               </div>
 
               {/* Name Input */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#635343] mb-1.5">
-                  Nombre completo o cómo te conocen *
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#635343] mb-1.5 flex items-center justify-between">
+                  <span>Nombre completo o cómo te conocen *</span>
+                  <span className="text-[10px] text-[#A24A30] font-semibold lowercase">Obligatorio</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (nameError) setNameError('');
+                  }}
                   placeholder="Ej. Valentina Morales, Camilo..."
-                  className="w-full px-4 py-3 bg-white border border-[#E1D6C5] rounded-2xl text-sm text-[#2D241C] placeholder-[#A89A8C] focus:outline-none focus:ring-2 focus:ring-[#8C7661]"
+                  className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm text-[#2D241C] placeholder-[#A89A8C] focus:outline-none focus:ring-2 transition-all ${
+                    nameError
+                      ? 'border-[#DC2626] focus:ring-[#DC2626]'
+                      : 'border-[#E1D6C5] focus:ring-[#8C7661]'
+                  }`}
                 />
+                {nameError && (
+                  <p className="text-xs text-[#DC2626] font-medium mt-1">{nameError}</p>
+                )}
+              </div>
+
+              {/* WhatsApp o celular (MANDATORIO) */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#635343] mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-[#16A34A]" />
+                    <span>WhatsApp o celular *</span>
+                  </span>
+                  <span className="text-[10px] text-[#A24A30] font-semibold lowercase">Obligatorio</span>
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    if (phoneError) setPhoneError('');
+                  }}
+                  placeholder="Ej. 300 123 4567 o +57 310 987 6543"
+                  className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm text-[#2D241C] placeholder-[#A89A8C] focus:outline-none focus:ring-2 transition-all ${
+                    phoneError
+                      ? 'border-[#DC2626] focus:ring-[#DC2626]'
+                      : 'border-[#E1D6C5] focus:ring-[#8C7661]'
+                  }`}
+                />
+                {phoneError && (
+                  <p className="text-xs text-[#DC2626] font-medium mt-1">{phoneError}</p>
+                )}
               </div>
 
               {/* Date Selection */}
@@ -215,7 +291,7 @@ export const RegisterFormsModal: React.FC<RegisterFormsModalProps> = ({
               {/* Alias */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#635343] mb-1.5">
-                  WhatsApp o Instagram (Opcional)
+                  Apodo o Usuario de Instagram (Opcional)
                 </label>
                 <input
                   type="text"
